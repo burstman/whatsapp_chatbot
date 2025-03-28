@@ -1,3 +1,4 @@
+```
 ecommerce_chatbot/
 ├── database/
 │   ├── __init__.py         # Marks directory as a package
@@ -15,3 +16,4 @@ ecommerce_chatbot/
 │   └── main.py             # FastAPI app (endpoints)
 ├── requirements.txt        # Project dependencies
 └── README.md               # Project documentation
+```
