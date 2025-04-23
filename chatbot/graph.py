@@ -17,6 +17,8 @@ from chatbot.handlers import (
     handle_greeting,
     handle_new_order,
     handle_address_input,
+    retrieve_order,
+    handle_report_issue,
 )
 from chatbot.llm import detect_language
 from chatbot.types import AgentState
@@ -36,6 +38,8 @@ workflow.add_node("handle_none", handle_none)
 workflow.add_node("handle_greeting", handle_greeting)
 workflow.add_node("handle_new_order", handle_new_order)
 workflow.add_node("handle_address_input", handle_address_input)
+workflow.add_node("retrieve_order", retrieve_order)
+workflow.add_node("handle_report_issue", handle_report_issue)
 
 
 # Define routing function
@@ -53,6 +57,10 @@ def route_intent(state: AgentState) -> str:
         return "handle_none"
     elif intent == "new_order":
         return "handle_new_order"
+    elif intent == "retrieve_order":
+        return "retrieve_order"
+    elif intent == "report_issue":
+        return "handle_report_issue"
     else:
         logger.warning(f"Unhandled intent: {intent}, routing to handle_none")
         return "handle_none"  # Default for unhandled intents
@@ -81,6 +89,8 @@ workflow.add_conditional_edges(
         "handle_none": "handle_none",
         "handle_new_order": "handle_new_order",
         "handle_address_input": "handle_address_input",
+        "retrieve_order": "retrieve_order",
+        "handle_report_issue": "handle_report_issue",
     },
 )
 
@@ -98,6 +108,8 @@ workflow.add_edge("handle_list_products", END)
 workflow.add_edge("handle_none", END)
 workflow.add_edge("handle_greeting", END)
 workflow.add_edge("handle_address_input", END)
+workflow.add_edge("retrieve_order", END)
+workflow.add_edge("handle_report_issue", END)
 
 # Compile the graph
 graph = workflow.compile()
