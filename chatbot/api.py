@@ -10,7 +10,7 @@
 
 import logging
 from chatbot.db import SessionLocal, User, Claim
-from converty_api import (
+from api.converty import (
     get_customer_orders,
     CustomerOrderQuery,
     create_order,

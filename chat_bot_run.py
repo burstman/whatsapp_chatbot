@@ -5,10 +5,8 @@
 #   - Dependencies: fastapi, uvicorn, twilio, sqlalchemy, python-dotenv (install via requirements.txt).
 #   - chatbot/ package must exist in llm_chatbot_server/chatbot/ with all modules (__init__.py, db.py, llm.py, handlers.py, api.py, webhook.py, graph.py, types.py).
 # Notes:
-#   - Run this file to start the server: `python new_deepseek_customer.py`.
+#   - Run this file to start the server: `python chat_bot_run.py`.
 #   - Creates database tables on startup using SQLAlchemy.
-#   - Fixed ObjectNotExecutableError by moving schema creation to db.py with sqlalchemy.sql.text().
-#   - Added Twilio client initialization for webhook.py to fix 500 error.
 
 import os
 import logging

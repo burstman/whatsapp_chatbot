@@ -687,65 +687,6 @@ def handle_address_input(state: dict, config: dict) -> dict:
     return state
 
 
-# def handle_report_issue(state: dict, config: dict) -> dict:
-#     user_id = config.get("configurable", {}).get("phone_number")
-#     language = state["language"]
-#     name = config.get("configurable", {}).get("name")
-#     issue_product = state.get("issue_product")
-#     user_input = state["user_input"]
-
-#     if not issue_product or issue_product.lower() == "none":
-#         prompt = (
-#             f"Generate a message in {language} informing the user that no product was identified and asking them to specify a product they’ve ordered (e.g., 'problem with my phone'). "
-#             f"Keep it short and friendly. "
-#             f"Output exactly in this format:\n"
-#             f"**Response:** message"
-#         )
-#         message = HumanMessage(content=prompt)
-#         response = llm.invoke([message]).content
-#         state["response"] = extract_answer(response, "**Response:**")
-#     else:
-#         orders = api_call("get_orders", {"user_id": user_id})
-#         has_ordered = any(
-#             issue_product.lower() in [item.lower() for item in order.get("items", [])]
-#             for order in orders
-#         )
-
-#         if has_ordered:
-#             issue_data = {
-#                 "product": issue_product,
-#                 "description": user_input,
-#                 "name": name,
-#                 "phone_number": user_id,
-#                 "status": "Pending",
-#             }
-#             result = api_call("save_issue", {"user_id": user_id, "issue": issue_data})
-#             prompt = (
-#                 f"Generate a message in {language} thanking the user for reporting an issue with {issue_product} and informing them an agent will contact them soon. Include Issue ID: {result['issue_id']}. "
-#                 f"Keep it short and friendly. "
-#                 f"Output exactly in this format:\n"
-#                 f"**Response:** message"
-#             )
-#             message = HumanMessage(content=prompt)
-#             response = llm.invoke([message]).content
-#             state["response"] = extract_answer(response, "**Response:**")
-#         else:
-#             prompt = (
-#                 f"Generate a message in {language} informing the user that they haven’t ordered a {issue_product} and asking them to specify a purchased product (e.g., 'problem with my phone'). "
-#                 f"Keep it short and friendly. "
-#                 f"Output exactly in this format:\n"
-#                 f"**Response:** message"
-#             )
-#             message = HumanMessage(content=prompt)
-#             response = llm.invoke([message]).content
-#             state["response"] = extract_answer(response, "**Response:**")
-
-#     state["next_step"] = None
-#     state["issue_product"] = None
-#     logger.info(f"State after handle_report_issue: {state}")
-#     return state
-
-
 def retrieve_order(state: dict, config: dict) -> dict:
     print(f"Retrieving order for state: {state}")
     user_id = config.get("configurable", {}).get("phone_number")
