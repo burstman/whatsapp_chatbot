@@ -45,52 +45,21 @@ def process_input(state: dict) -> dict:
         }
 
     # Define intent classification prompt by language with E-commerce context
-    intent_templates = {
-        "english": (
-            f"You are an E-commerce Agent assisting customers with requests about products and orders. "
-            f"Classify the intent of the user's input: '{user_input}'. "
-            f"Possible intents: new_order, retrieve_order, list_products, greeting, report_issue, none. "
-            f"If the user wants to purchase items (e.g., 'I want to buy X and Y' or 'I want to order the Z'), classify as 'new_order' and extract the item names exactly as provided (e.g., 'Presse Argume' or 'Presse Argume,wall lamp'). "
-            f"For a single item, output only that item (e.g., 'Presse Argume'). For multiple items, separate by commas without 'and' (e.g., 'X,Y'). "
-            f"If no items are specified or the input is ambiguous, set Items to 'none'. "
-            f"Do not use 'Non-relevant' or other invalid values. "
-            f"Output exactly in this format:\n"
-            f"**Intent:** intent_name\n"
-            f"**Items:** item_name_1,item_name_2,...,item_name_n_or_none\n"
-            f"**IssueProduct:** none\n"
-            f"**Address:** none"
-        ),
-        "french": (
-            f"Vous êtes un Agent E-commerce aidant les clients avec des demandes sur les produits et les commandes. "
-            f"Classifiez l'intention de l'entrée : '{user_input}'. "
-            f"Intentions possibles : new_order, retrieve_order, list_products, greeting, report_issue, none. "
-            f"Si l'utilisateur veut acheter des articles (par exemple, 'Je veux acheter X et Y' ou 'Je veux commander le Z'), classez comme 'new_order' et extrayez les noms des articles exactement comme fournis (par exemple, 'Presse Argume' ou 'Presse Argume,lampe murale'). "
-            f"Pour un seul article, indiquez uniquement cet article (par exemple, 'Presse Argume'). Pour plusieurs articles, séparez par des virgules sans 'et' (par exemple, 'X,Y'). "
-            f"Si aucun article n'est spécifié ou si l'entrée est ambiguë, définissez Items sur 'none'. "
-            f"Ne pas utiliser 'Non-relevant' ou d'autres valeurs invalides. "
-            f"Sortie exactement dans ce format :\n"
-            f"**Intent:** nom_intention\n"
-            f"**Items:** nom_article_1,nom_article_2,...,nom_article_n_ou_none\n"
-            f"**IssueProduct:** aucun\n"
-            f"**Address:** aucun"
-        ),
-        "arabic": (
-            f"أنت وكيل تجارة إلكترونية تساعد العملاء في استفسارات المنتجات والطلبات. "
-            f"صنّف نية الإدخال: '{user_input}'. "
-            f"النيات الممكنة: new_order, retrieve_order, list_products, greeting, report_issue, none. "
-            f"إذا أراد المستخدم شراء عناصر (مثل 'أريد شراء X و Y' أو 'أريد طلب Z'), صنّف كنية 'new_order' واستخرج أسماء العناصر كما هي (مثل 'Presse Argume' أو 'Presse Argume,مصباح حائط'). "
-            f"لعنصر واحد، أخرج هذا العنصر فقط (مثل 'Presse Argume'). لعناصر متعددة، افصل بفواصل بدون 'و' (مثل 'X,Y'). "
-            f"إذا لم يتم تحديد عناصر أو كان الإدخال غامضًا، عيّن Items إلى 'none'. "
-            f"لا تستخدم 'Non-relevant' أو قيمًا غير صالحة أخرى. "
-            f"الإخراج بالضبط بهذا الشكل:\n"
-            f"**Intent:** اسم_النية\n"
-            f"**Items:** اسم_العنصر_1,اسم_العنصر_2,...,اسم_العنصر_n_أو_none\n"
-            f"**IssueProduct:** لا_شيء\n"
-            f"**Address:** لا_شيء"
-        ),
-    }
+    prompt = (
+        f"You are an E-commerce Agent assisting customers with requests about products and orders. "
+        f"Classify the intent of the user's input: '{user_input}'. "
+        f"Possible intents: new_order, retrieve_order, list_products, greeting, report_issue, none. "
+        f"If the user wants to purchase items (e.g., 'I want to buy X and Y' or 'I want to order the Z'), classify as 'new_order' and extract the item names exactly as provided (e.g., 'Presse Argume' or 'Presse Argume,wall lamp'). "
+        f"For a single item, output only that item (e.g., 'Presse Argume'). For multiple items, separate by commas without 'and' (e.g., 'X,Y'). "
+        f"If no items are specified or the input is ambiguous, set Items to 'none'. "
+        f"Do not use 'Non-relevant' or other invalid values. "
+        f"Output exactly in this format:\n"
+        f"**Intent:** intent_name\n"
+        f"**Items:** item_name_1,item_name_2,...,item_name_n_or_none\n"
+        f"**IssueProduct:** none\n"
+        f"**Address:** none"
+    )
 
-    prompt = intent_templates.get(language, intent_templates["english"])
     message = HumanMessage(content=prompt)
 
     try:
@@ -108,8 +77,8 @@ def process_input(state: dict) -> dict:
 
         intent = extract_answer(response, "**Intent:**")
         requested_items_raw = extract_answer(response, "**Items:**")
-        issue_product = extract_answer(response, "**IssueProduct:**").lower()
-        address = extract_answer(response, "**Address:**").lower()
+        issue_product = extract_answer(response, "**IssueProduct:**")
+        address = extract_answer(response, "**Address:**")
 
         valid_intents = {
             "new_order",
@@ -306,7 +275,9 @@ def handle_greeting(state: dict) -> dict:
     """
     Handle greeting intents with a friendly response.
     """
+    logger.info(state)
     language = state.get("language", "english")
+    logger.info(f"Handling greeting in {language}")
     user_input = state.get("user_input", "")
 
     if language == "french":
@@ -745,7 +716,7 @@ def handle_report_issue(state: dict, config: dict) -> dict:
     issue_product = state.get("issue_product")
     user_input = state["user_input"]
 
-    if not issue_product or issue_product.lower() == "none":
+    if not issue_product or issue_product == "none":
         prompt = (
             f"Generate a message in {language} informing the user that no product was identified and asking them to specify a product they’ve ordered (e.g., 'problem with my phone'). "
             f"Keep it short and friendly. "
@@ -781,7 +752,7 @@ def handle_report_issue(state: dict, config: dict) -> dict:
             # Use LLM to match issue_product to ordered items
             prompt = (
                 f"You are an E-commerce Agent assisting customers. "
-                f"The user reported an issue with: '{issue_product}'. "
+                f"The user reported an issue with: '{', '.join(issue_product)}'. "
                 f"Their ordered items are: {', '.join(ordered_items)}. "
                 f"There is exactly 1 item to match. "
                 f"Identify the most likely matching product from the ordered items, accounting for misspellings, shortened names, or partial matches. "
@@ -791,7 +762,6 @@ def handle_report_issue(state: dict, config: dict) -> dict:
                 f"2. If no substring match, select the item with the closest string similarity (e.g., smallest number of letter changes). "
                 f"3. If no reasonable match is found, return 'none'. "
                 f"Return exactly 1 product name in a comma-separated string. "
-                f"Do not return extra products or unmatched items. "
                 f"Preserve spaces in product names and do not use underscores. "
                 f"Output exactly in this format:\n"
                 f"**Products:** product_name"
@@ -834,20 +804,69 @@ def handle_report_issue(state: dict, config: dict) -> dict:
                     response = llm.invoke([message]).content
                     state["response"] = extract_answer(response, "**Response:**")
                 else:
-                    # Valid match found, save the issue
+                    # Use LLM to categorize the claim
+                    claim_categories = [
+                        "defective",
+                        "wrong_item",
+                        "missing_item",
+                        "delivery",
+                        "quality",
+                        "quantity",
+                        "packaging",
+                        "other",
+                    ]
+                    prompt = (
+                        f"You are an E-commerce Agent categorizing a customer claim. "
+                        f"The user reported an issue with '{matched_product}' and described it as: '{user_input}'. "
+                        f"Categorize the issue into one of the following categories: {', '.join(claim_categories)}. "
+                        f"- 'defective': Product is damaged or not functioning (e.g., 'doesn’t work', 'broken'). "
+                        f"- 'wrong_item': Received a different product (e.g., 'got a lamp instead'). "
+                        f"- 'missing_item': Product or parts missing (e.g., 'missing blades'). "
+                        f"- 'delivery': Shipping issues like late or non-delivery (e.g., 'hasn’t arrived'). "
+                        f"- 'quality': Poor quality or below expectations (e.g., 'feels cheap'). "
+                        f"- 'quantity': Incorrect number of items (e.g., 'got two instead of one'). "
+                        f"- 'packaging': Damaged due to poor packaging (e.g., 'box was crushed'). "
+                        f"- 'other': Issues not fitting above (e.g., 'just unhappy'). "
+                        f"Analyze the description and select the most appropriate category. "
+                        f"If unclear, default to 'other'. "
+                        f"Output exactly in this format:\n"
+                        f"**Category:** category_name"
+                    )
+                    message = HumanMessage(content=prompt)
+                    response = llm.invoke([message]).content
+                    logger.info(f"LLM response for claim categorization: {response}")
+                    claim_category = extract_answer(response, "**Category:**")
+
+                    # Validate category
+                    if isinstance(claim_category, list):
+                        claim_category = (
+                            claim_category[0] if claim_category else "other"
+                        )
+                    if claim_category not in claim_categories:
+                        logger.warning(
+                            f"Invalid category '{claim_category}', defaulting to 'other'"
+                        )
+                        claim_category = "other"
+
+                    logger.info(f"Claim category: {claim_category}")
+
+                    # Save the issue with category
                     issue_data = {
                         "product": matched_product,
                         "description": user_input,
                         "name": name,
                         "phone_number": user_id,
                         "status": "Pending",
+                        "type": claim_category,
                     }
                     result = api_call(
                         "save_issue", {"user_id": user_id, "issue": issue_data}
                     )
                     prompt = (
+                        f"You are an E-commerce Agent generating a response in {language} ONLY. Do not use any other language, including Chinese. "
                         f"Generate a message in {language} thanking the user for reporting an issue with {matched_product} and informing them an agent will contact them soon. "
                         f"Include Issue ID: {result['issue_id']}. "
+                        f"Mention the issue category ({claim_category}) for clarity. "
                         f"Keep it short and friendly. "
                         f"Output exactly in this format:\n"
                         f"**Response:** message"
@@ -856,7 +875,9 @@ def handle_report_issue(state: dict, config: dict) -> dict:
                     response = llm.invoke([message]).content
                     state["response"] = extract_answer(response, "**Response:**")
             except Exception as e:
-                logger.error(f"Error in LLM matching for issue product: {str(e)}")
+                logger.error(
+                    f"Error in LLM processing for issue product or category: {str(e)}"
+                )
                 prompt = (
                     f"Generate an error message in {language} indicating a failure to process the issue for '{issue_product}': {str(e)}. "
                     f"Ask the user to try again or contact support. "

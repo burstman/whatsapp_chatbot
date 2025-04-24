@@ -20,6 +20,7 @@ from chatbot.webhook import (
     set_twilio_client,
 )  # Add set_twilio_client
 from chatbot.graph import graph
+import colorlog
 
 from dotenv import load_dotenv
 
@@ -53,6 +54,23 @@ for var, name in [
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+logger.handlers.clear()  # Clear any existing handlers
+logger.setLevel(logging.INFO)  # Set level directly
+handler = colorlog.StreamHandler()
+handler.setFormatter(
+    colorlog.ColoredFormatter(
+        "%(log_color)s%(levelname)s:%(name)s:%(message)s",
+        log_colors={
+            "DEBUG": "cyan",
+            "INFO": "green",
+            "WARNING": "yellow",
+            "ERROR": "red",
+            "CRITICAL": "red,bg_white",
+        },
+    )
+)
+logger.addHandler(handler)
+logger.propagate = False
 # Initialize Twilio client
 try:
     client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)

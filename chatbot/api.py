@@ -9,7 +9,7 @@
 #   - Fallback product list included for API failures.
 
 import logging
-from chatbot.db import SessionLocal, User, Claim
+from chatbot.db import SessionLocal, User, Interaction
 from api.converty import (
     get_customer_orders,
     CustomerOrderQuery,
@@ -109,21 +109,21 @@ def api_call(endpoint: str, payload: dict = None):
                     if not order_id:
                         raise ValueError("Order creation failed: No order ID returned")
 
-                    claim_details = {
+                    interaction_details = {
                         "order_id": order_id,
                         "items": items,
                         "product_ids": [item.product_id for item in cart_items],
                         "status": "pending",
                     }
-                    claim = Claim(
+                    interactions = Interaction(
                         user_id=user.id,
                         type="order",
-                        details=claim_details,
+                        details=interaction_details,
                         status="pending",
                     )
-                    session.add(claim)
+                    session.add(interactions)
                     session.commit()
-                    return {"status": "success", "order_id": f"ord{claim.id}"}
+                    return {"status": "success", "order_id": f"ord{interactions.id}"}
                 except Exception as e:
                     logger.error(f"Error creating order in Converty API: {e}")
                     return {"error": str(e)}
@@ -135,13 +135,13 @@ def api_call(endpoint: str, payload: dict = None):
                 if not user:
                     raise ValueError("User not found")
                 user.address = address
-                claim = Claim(
+                interactions = Interaction(
                     user_id=user.id,
                     type="address",
                     details={"address": address},
                     status="completed",
                 )
-                session.add(claim)
+                session.add(interactions)
                 session.commit()
                 return {"status": "address_updated"}
 
@@ -151,12 +151,12 @@ def api_call(endpoint: str, payload: dict = None):
                 user = session.query(User).filter_by(phone_number=user_id).first()
                 if not user:
                     raise ValueError("User not found")
-                claim = Claim(
+                interactions = Interaction(
                     user_id=user.id, type="issue", details=issue, status="pending"
                 )
-                session.add(claim)
+                session.add(interactions)
                 session.commit()
-                return {"status": "success", "issue_id": f"iss{claim.id}"}
+                return {"status": "success", "issue_id": f"iss{interactions.id}"}
 
             return {"error": "Invalid endpoint"}
 

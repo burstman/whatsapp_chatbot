@@ -72,6 +72,7 @@ def detect_language(state: AgentState, config: RunnableConfig) -> AgentState:
 
 
 def extract_answer(response: str, key: str) -> str | list:
+    print(key)
     """
     Extract the value associated with a key from the LLM response.
     Returns a string for most keys, or a list for **Products:**.
@@ -115,6 +116,7 @@ def extract_answer(response: str, key: str) -> str | list:
         parts = response.split(key)
         if len(parts) > 1:
             value = parts[-1].split("**")[0].strip()
+            # print(value)
             if key == "**Intent:**":
                 valid_intents = {
                     "new_order",
@@ -126,28 +128,40 @@ def extract_answer(response: str, key: str) -> str | list:
                     "report_issue",
                     "none",
                 }
-                return value if value in valid_intents else "none"
+                return value.lower() if value.lower() in valid_intents else "none"
             elif key == "**Products:**":
                 return (
                     [item.strip() for item in value.split(",") if item.strip()]
                     if value
                     else []
                 )
-            return value
-
-    if "<think>" in response and "</think>" in response:
-        post_think = response.split("</think>")[-1].strip()
-        if post_think:
-            logger.info(f"Extracted post-think value: {post_think}")
-            if key == "**Products:**":
+            elif key == "**IssueProduct:**":
                 return (
-                    [item.strip() for item in post_think.split(",") if item.strip()]
-                    if post_think
+                    [item.strip() for item in value.split(",") if item.strip()]
+                    if value
                     else []
                 )
-            return post_think
+
+            elif key == "**Category:**":
+                valid_category = {
+                    "defective",
+                    "wrong_item",
+                    "missing_item",
+                    "delivery",
+                    "quality",
+                    "quantity",
+                    "packaging",
+                    "other",
+                }
+                return value if value in valid_category else "none"
+            elif key == "**Language:**":
+                valid_languages = {"english", "french", "arabic"}
+                return value.lower() if value.lower() in valid_languages else "none"
+            elif key == "**Response:**":
+                return value
+            elif key == "**Address:**":
+                return value
 
     logger.warning(
         f"Unexpected LLM response format for {key}: {response}. Defaulting to 'none' or []"
     )
-    return "none" if key != "**Products:**" else []

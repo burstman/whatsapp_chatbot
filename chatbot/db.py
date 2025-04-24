@@ -81,6 +81,18 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
+class Interaction(Base):
+    __tablename__ = "interactions"
+    __table_args__ = {"schema": "chatbot"}
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("chatbot.users.id"), nullable=False)
+    type = Column(String(20), nullable=False)
+    details = Column(JSONB, nullable=False)
+    status = Column(String(20), default="pending")
+    created_at = Column(DateTime, server_default=func.now())
+    user = relationship("User", back_populates="interactions")
+
+
 class User(Base):
     __tablename__ = "users"
     __table_args__ = {"schema": "chatbot"}
@@ -89,19 +101,7 @@ class User(Base):
     name = Column(String(100))
     address = Column(Text)
     created_at = Column(DateTime, server_default=func.now())
-    claims = relationship("Claim", back_populates="user")
-
-
-class Claim(Base):
-    __tablename__ = "claims"
-    __table_args__ = {"schema": "chatbot"}
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("chatbot.users.id"), nullable=False)
-    type = Column(String(20), nullable=False)
-    details = Column(JSONB, nullable=False)
-    status = Column(String(20), default="pending")
-    created_at = Column(DateTime, server_default=func.now())
-    user = relationship("User", back_populates="claims")
+    interactions = relationship("Interaction", back_populates="user")
 
 
 # Enable SQLAlchemy query logging
