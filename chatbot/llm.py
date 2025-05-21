@@ -17,6 +17,7 @@ from langchain_ollama import ChatOllama
 from langchain_core.messages import HumanMessage
 from chatbot.types import AgentState
 from langchain_core.runnables import RunnableConfig
+from lingua import LanguageDetectorBuilder, Language
 
 logger = logging.getLogger(__name__)
 
@@ -24,50 +25,73 @@ logger = logging.getLogger(__name__)
 llm = ChatOllama(model="deepseek-r1", temperature=0.0)
 
 
+# Dictionary of known greetings
+GREETINGS = {
+    "hello": "english",
+    "hi": "english",
+    "bonjour": "french",
+    "salut": "french",
+    "مرحبا": "arabic",
+    "السلام": "arabic"
+}
+
+# Initialize Lingua detector for English, French, Arabic
+detector = LanguageDetectorBuilder.from_languages(
+    Language.ENGLISH, Language.FRENCH, Language.ARABIC
+).build()
+
 def detect_language(state: AgentState, config: RunnableConfig) -> AgentState:
-    """Uses LLM to detect the language of user_input (English, French, or Arabic) without translation."""
+    """Detect the language of user_input (English, French, or Arabic)"""
     user_input = state["user_input"].strip()
     state["original_input"] = user_input
-    state["language"] = "english"
+    state["language"] = "english"  # Default language
 
     try:
-        prompt = (
-            f"Given the input: '{user_input}', perform the following task:\n"
-            f"1. Detect the language, which must be one of: English, French, or Arabic.\n"
-            f"Output exactly in this format, with no additional text or comments:\n"
-            f"**Language:** detected_language"
-        )
-        message = HumanMessage(content=prompt)
-        response = ""
-        logger.info(f"Streaming LLM response for language detection of '{user_input}':")
-        for chunk in llm.stream([message]):
-            chunk_content = chunk.content
-            response += chunk_content
-            print(chunk_content, end="", flush=True)
-        print()
-        # logger.info(f"Complete LLM response: {response}")
+        # Check dictionary for known greetings
+        if user_input.lower() in GREETINGS:
+            language = GREETINGS[user_input.lower()]
+            logger.info(f"Detected language from dictionary: {language} for input: {user_input}")
+        else:
+            # Use Lingua with confidence threshold
+            result = detector.compute_language_confidence_values(user_input)
+            if result and isinstance(result, list) and len(result) > 0:
+                top_lang = result[0].language
+                confidence = result[0].value
+                logger.info(f"Lingua detection for '{user_input}': {top_lang} (confidence: {confidence})")
+                if confidence >= 0.7:  # Confidence threshold
+                    # Map ISO 639-1 codes to expected language names
+                    language_map = {
+                        "en": "english",
+                        "fr": "french",
+                        "ar": "arabic"
+                    }
+                    language = language_map.get(top_lang.iso_code_639_1.name.lower(), "english")
+                else:
+                    language = "english"
+                    logger.warning(f"Low confidence ({confidence}) for '{user_input}', defaulting to English")
+            else:
+                language = "english"
+                logger.warning(f"No valid detection for '{user_input}', defaulting to English")
 
-        language = extract_answer(response, "**Language:**").lower()
+        # Validate language
         valid_languages = {"english", "french", "arabic"}
+        print("get language:",language)
+        
         if language not in valid_languages:
-            logger.warning(
-                f"Invalid language detected: {language}, defaulting to English"
-            )
+            logger.warning(f"Invalid language detected: {language}, defaulting to English")
             language = "english"
+
         state["language"] = language
         state["user_input"] = user_input  # Keep original input
-
-        logger.info(
-            f"Detected language: {language}, keeping original input: {user_input}"
-        )
+        logger.info(f"Detected language: {language}, keeping original input: {user_input}")
 
     except Exception as e:
-        logger.error(f"Error in LLM language detection: {str(e)}")
+        logger.error(f"Error in language detection: {str(e)}")
         logger.error(traceback.format_exc())
         state["language"] = "english"
         state["user_input"] = user_input
 
-    logger.info(f"State after detect_and_translate: {state}")
+    logger.info(f"State after detect_language: {state}")
     return state
 
 

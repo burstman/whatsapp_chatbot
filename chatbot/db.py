@@ -28,6 +28,11 @@ from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import text, func
 import traceback
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 
 # Environment variables
 DB_HOST = os.getenv("DB_HOST")

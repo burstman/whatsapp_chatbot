@@ -13,7 +13,7 @@ from typing import List, Dict, Optional
 API_URL = "https://api.converty.shop/api/v1/products"
 ORDERS_API_URL = "https://api.converty.shop/api/v1/orders"
 # LocalApi
-REFRESH_TOKEN_URL = "http://localhost:8080/GetAccessToken"
+REFRESH_TOKEN_URL = "http://localhost:9001/GetAccessToken"
 
 
 def get_valid_access_token():
@@ -38,6 +38,19 @@ def get_valid_access_token():
 
 
 def fetch_converty_products():
+    """
+    Fetch products from the Converty API with robust token handling.
+    
+    This function retrieves product data from the Converty shop API, with built-in error handling
+    for authentication and request issues. It supports automatic token refresh on 401 Unauthorized
+    responses and validates the API response.
+    
+    Returns:
+        List[Dict]: A list of product dictionaries from the Converty API.
+    
+    Raises:
+        Exception: If there are issues with token retrieval, API authentication, or request processing.
+    """
     try:
         access_token = get_valid_access_token()
 

@@ -114,5 +114,14 @@ workflow.add_edge("handle_report_issue", END)
 # Compile the graph
 graph = workflow.compile()
 
+# Save the graph as a PNG image using Mermaid
+output_path = "workflow_graph.png"
+png_data = graph.get_graph().draw_mermaid_png()  # Generate PNG bytes
+with open(output_path, "wb") as f:
+    f.write(png_data)
+
+print(f"Graph image saved to {output_path}")
+
+
 # Export the graph for use in webhook
 __all__ = ["graph"]
